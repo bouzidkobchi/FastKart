@@ -41,11 +41,11 @@
 services:
   app:
     build:
-      context: ./fastkart
+      context: ./FastKart
       dockerfile: Dockerfile
     container_name: fastkart-app
     ports:
-      - "8080:8080"
+      - "5050:5050"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fastkart;Username=postgres;Password=postgres;Gss Encryption Mode=Disable"
