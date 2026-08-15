@@ -134,3 +134,4 @@ C:\Users\Bouzid\source\repos\FastKart\FastKart\obj\Debug\net10.0\FastKart.pdb
 C:\Users\Bouzid\source\repos\FastKart\FastKart\obj\Debug\net10.0\FastKart.genruntimeconfig.cache
 C:\Users\Bouzid\source\repos\FastKart\FastKart\obj\Debug\net10.0\ref\FastKart.dll
 C:\Users\Bouzid\source\repos\FastKart\FastKart\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+C:\Users\Bouzid\source\repos\FastKart\FastKart\obj\Debug\net10.0\FastKart.sourcelink.json

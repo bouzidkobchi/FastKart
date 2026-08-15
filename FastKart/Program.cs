@@ -37,7 +37,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var constr = builder.Configuration.GetConnectionString("pg");
+    var constr = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseNpgsql(constr);
 });
 
@@ -75,6 +75,14 @@ builder.Services.AddScoped< // scoped to match the appdbcontext
     PermissionAuthorizationHandler>();
 
 var app = builder.Build();
+
+// Apply EF Core migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
