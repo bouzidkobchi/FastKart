@@ -1,44 +1,4 @@
-﻿# services:
-
-#   app:
-#     build:
-#       context: ./fastkart
-#       dockerfile: Dockerfile
-#     container_name: fastkart-app
-#     ports:
-#       - "8080:8080"
-#     environment:
-#       ASPNETCORE_ENVIRONMENT: Development
-#       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fastkart;Username=postgres;Password=postgres"
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#     post_start:
-#       - command: echo "Container started successfully!"
-#         user: root
-
-#   postgres:
-#     image: postgres:17
-#     container_name: fastkart-postgres
-#     restart: unless-stopped
-#     environment:
-#       POSTGRES_DB: fastkart
-#       POSTGRES_USER: postgres
-#       POSTGRES_PASSWORD: postgres
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#     ports:
-#       - "5432:5432"
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U postgres -d fastkart"]
-#       interval: 5s
-#       timeout: 5s
-#       retries: 5
-
-# volumes:
-#   postgres_data:
-
-services:
+﻿services:
   app:
     build:
       context: ./FastKart
@@ -63,8 +23,8 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d fastkart"]
       interval: 5s

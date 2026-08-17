@@ -211,6 +211,32 @@
   },
   {
     "ContainingType": "FastKart.Controllers.UsersController",
+    "Method": "UpdateMyInfo",
+    "RelativePath": "api/Users/my-info",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "FastKart.Models.Requests.UpdateMyInfoModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "FastKart.Models.Responses.ApiResponse",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "FastKart.Controllers.UsersController",
     "Method": "AddRole",
     "RelativePath": "api/Users/roles",
     "HttpMethod": "POST",
@@ -257,6 +283,58 @@
         "Name": "Count",
         "Type": "System.Int32",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "FastKart.Models.Responses.ApiResponse",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "FastKart.Controllers.UsersController",
+    "Method": "UpdateUserRole",
+    "RelativePath": "api/Users/update-role",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "FastKart.Models.Requests.UpdateUserRoleModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "FastKart.Models.Responses.ApiResponse",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "FastKart.Controllers.UsersController",
+    "Method": "UpdateUserStatus",
+    "RelativePath": "api/Users/update-status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "FastKart.Models.Requests.UpdateUserStatusModel",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": [

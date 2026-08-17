@@ -5,14 +5,18 @@ using FastKart.Models.Data;
 using FastKart.Models.DTOs;
 using FastKart.Models.Requests;
 using FastKart.Models.Responses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static FastKart.Controllers.AuthController;
 
 namespace FastKart.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public partial class UsersController : ControllerBase
     {
         private readonly AppDbContext context;
 
@@ -49,7 +53,7 @@ namespace FastKart.Controllers
                 });
             }
 
-            var emailExists = await context.Users.FirstOrDefaultAsync(u => u.Email == addUserModel.Email) != null;
+            var emailExists = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == addUserModel.Email) != null;
             if (emailExists)
             {
                 return BadRequest("email already exists");
@@ -226,6 +230,7 @@ namespace FastKart.Controllers
             }
 
             var roles = await context.Roles
+                .AsNoTracking()
                 .Skip(page.Number * page.Count)
                 .Take(page.Count)
                 .Select(r => new RoleWithoutPermissionsDTO(r))
@@ -236,6 +241,181 @@ namespace FastKart.Controllers
                 Success = true,
                 Data = roles
             });
+        }
+
+        // update my info
+        [HttpPatch("my-info")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse>> UpdateMyInfo(UpdateMyInfoModel model, [FromServices] UpdateMyInfoModelValidator validator)
+        {
+            var validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                var errorDetails = validationResult.Errors
+                    .GroupBy(error => error.PropertyName)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(error => error.ErrorMessage)
+                            .ToArray());
+                return BadRequest(new ApiResponse()
+                {
+                    Success = false,
+                    Data = false,
+                    Error = new ApiError()
+                    {
+                        Code = ApiErrorCodes.ValidationFailed,
+                        Message = "validation error message",
+                        Details = errorDetails!,
+                    }
+                });
+            }
+
+            var userId = User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+
+            var user = await context.Users.FindAsync(Guid.Parse(userId)) ?? throw new UserDoesntExistException();
+
+            if (model.Name != null)
+            {
+                user.Name = model.Name;
+            }
+
+            if (model.Email != null)
+            {
+                user.Email = model.Email;
+            }
+
+            if(model.Phone != null)
+            {
+                user.Phone = model.Phone;
+            }
+
+            if(model.Password != null)
+            {
+                user.UpdatePassword(model.Password);
+            }
+
+            await context.SaveChangesAsync();
+
+            return Ok(new ApiResponse()
+            {
+                Success = true,
+                Data = "info updated successfuly!"
+            });
+        }
+
+        // update another user role
+        [HttpPatch("update-role")]
+        [HasPermission(Permission.UsersEdit)]
+        public async Task<ActionResult<ApiResponse>> UpdateUserRole(UpdateUserRoleModel model, [FromServices] UpdateUserRoleModelValidator validator)
+        {
+            var validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                var errorDetails = validationResult.Errors
+                    .GroupBy(error => error.PropertyName)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(error => error.ErrorMessage)
+                            .ToArray());
+                return BadRequest(new ApiResponse()
+                {
+                    Success = false,
+                    Data = false,
+                    Error = new ApiError()
+                    {
+                        Code = ApiErrorCodes.ValidationFailed,
+                        Message = "validation error message",
+                        Details = errorDetails!,
+                    }
+                });
+            }
+
+            var currentUserId = Guid.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            if(currentUserId == model.UserId)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null , Error = new ApiError() { Code = ApiErrorCodes.InsufficientPermissions , Message = "user can not update his role"} });
+            }
+
+            var role = await context.Roles.FindAsync(model.Role);
+            if (role  == null)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null, Error = new ApiError() { Code = ApiErrorCodes.RoleNotFound, Message = "role not found" } });
+            }
+
+            var user = await context.Users.FindAsync(model.UserId);
+            if (user  == null)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null, Error = new ApiError() { Code = ApiErrorCodes.UserNotFound, Message = "user not found" } });
+            }
+
+            user.Role = role;
+            await context.SaveChangesAsync();
+
+            // TODO : add in case the user was admin/allowed to update user role and want to change his role (downgrade)
+
+            return Ok(new ApiResponse() { Success = true, Data = "role updated successfuly"});
+        }
+
+        // block/ublock user / update user status
+        [HttpPut("update-status")]
+        [HasPermission(Permission.UsersEdit)]
+        public async Task<ActionResult<ApiResponse>> UpdateUserStatus(UpdateUserStatusModel model,[FromServices] UpdateUserStatusModelValidator validator)
+        {
+            var validationResult = validator.Validate(model);
+
+            if (!validationResult.IsValid)
+            {
+                var errorDetails = validationResult.Errors
+                    .GroupBy(error => error.PropertyName)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(error => error.ErrorMessage)
+                            .ToArray());
+                return BadRequest(new ApiResponse()
+                {
+                    Success = false,
+                    Data = false,
+                    Error = new ApiError()
+                    {
+                        Code = ApiErrorCodes.ValidationFailed,
+                        Message = "validation error message",
+                        Details = errorDetails!,
+                    }
+                });
+            }
+
+            // deny user from blocking himself
+            var currentUserId = Guid.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            if (currentUserId == model.UserId)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null, Error = new ApiError() { Code = ApiErrorCodes.InsufficientPermissions, Message = "user can not update his status" } });
+            }
+
+            var user = await context.Users.FindAsync(model.UserId);
+            if (user == null)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null, Error = new ApiError() { Code = ApiErrorCodes.UserNotFound, Message = "user not found" } });
+            }
+
+            if(user.Status == model.IsApproved == true)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null, Error = new ApiError() { Code = ApiErrorCodes.UserNotFound, Message = "user already approved" } });
+            }
+
+            if (user.Status == model.IsApproved == false)
+            {
+                return BadRequest(new ApiResponse() { Success = false, Data = null, Error = new ApiError() { Code = ApiErrorCodes.UserNotFound, Message = "user already blocked" } });
+            }
+
+            
+            user.Status = true;
+            await context.SaveChangesAsync();
+            return Ok(new ApiResponse() { Success = true, Data = "user status updated successfuly" });
         }
     }
 }

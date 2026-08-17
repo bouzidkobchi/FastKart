@@ -66,7 +66,7 @@ namespace FastKart.Controllers
 
             var clientRole = await _context.Roles.FindAsync("Client") ?? throw new DefaultRoleDoesntExistException("role client doesn't exist!");
 
-            var userExists = await _context.Users.FirstOrDefaultAsync(u => u.Email == registerModel.Email) != null;
+            var userExists = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == registerModel.Email) != null;
             if (userExists)
             {
                 return BadRequest(new ApiResponse()
@@ -100,7 +100,7 @@ namespace FastKart.Controllers
                 return response;
             }
 
-            var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == loginModel.Email);
+            var user = await _context.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == loginModel.Email);
 
             if (user is null)
             {
@@ -129,7 +129,7 @@ namespace FastKart.Controllers
 
             return Ok(new ApiResponse() {
                 Success = true,
-                Data = new { user = new { user.Name, user.Email, user.Status, user.CreatedAt, user.Phone, Role = user.Role.Name }, token, refeshToken }
+                Data = new { user = new UserWithRoleNameDTO(user), token, refeshToken }
             });
         }
 
@@ -232,11 +232,12 @@ namespace FastKart.Controllers
             // return the user data
 
             Console.WriteLine("User identity : " + User.Identity?.Name);
-            var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!));
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
             return Ok(new ApiResponse()
             {
                 Success = true,
-                Data = new { user!.Name, user.Email, user.Status, user.CreatedAt, user.Phone, Role = user.Role.Name },
+                Data = new UserWithRoleNameDTO(user),
             });
         }
 

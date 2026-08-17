@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using FastKart.Helpers;
+using FluentValidation;
 
 namespace FastKart.Models
 {
@@ -12,5 +13,10 @@ namespace FastKart.Models
         public bool Status { get; set; } = true; // false if blocked, true otherwise
         public required string PasswordHash { get; set; }
         public required string Phone { get; set; }
+
+        public void UpdatePassword(string password)
+        {
+            PasswordHash = PasswordHasher.CreatePasswordHash(password);
+        }
     }
 }
